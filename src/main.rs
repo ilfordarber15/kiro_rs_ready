@@ -73,15 +73,15 @@ async fn main() {
 
     tracing::info!("已加载 {} 个凭据配置", credentials_list.len());
 
-    // 获取第一个凭据用于日志显示
-    let first_credentials = credentials_list.first().cloned().unwrap_or_default();
-    tracing::debug!("主凭证: {:?}", first_credentials);
-
     // 获取 API Key
     let api_key = config.api_key.clone().unwrap_or_else(|| {
         tracing::error!("配置文件中未设置 apiKey");
         std::process::exit(1);
     });
+    if api_key.trim().is_empty() {
+        tracing::error!("配置文件中 apiKey 为空");
+        std::process::exit(1);
+    }
 
     // 构建代理配置
     let proxy_config = config.proxy_url.as_ref().map(|url| {
@@ -111,10 +111,7 @@ async fn main() {
 
     // 校验所有凭据声明的端点都已注册
     for cred in &credentials_list {
-        let name = cred
-            .endpoint
-            .as_deref()
-            .unwrap_or(&config.default_endpoint);
+        let name = cred.endpoint.as_deref().unwrap_or(&config.default_endpoint);
         if !endpoints.contains_key(name) {
             tracing::error!(
                 "凭据 id={:?} 指定了未知端点 \"{}\"（已注册: {:?}）",
