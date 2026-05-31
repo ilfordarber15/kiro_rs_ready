@@ -195,7 +195,12 @@ async fn main() {
     // 启动服务器
     let addr = format!("{}:{}", config.host, config.port);
     tracing::info!("启动 Anthropic API 端点: {}", addr);
-    tracing::info!("API Key: {}***", &api_key[..(api_key.len() / 2)]);
+    let masked_key = if api_key.len() > 8 {
+        format!("{}...{}", &api_key[..4], &api_key[api_key.len() - 4..])
+    } else {
+        "***".to_string()
+    };
+    tracing::info!("API Key: {}", masked_key);
     tracing::info!("可用 API:");
     tracing::info!("  GET  /v1/models");
     tracing::info!("  POST /v1/messages");

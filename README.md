@@ -451,6 +451,36 @@ RUST_LOG=debug ./target/release/kiro-rs
 
 ## 开发与维护
 
+### 快速开始
+
+推荐使用 Makefile 进行开发和构建：
+
+```bash
+# 运行完整 CI 验证（构建 UI + 格式检查 + Clippy + 测试）
+make ci
+
+# 构建 Release 版本
+make build
+
+# 单独运行各项检查
+make ui       # 构建 Admin UI
+make fmt      # 格式检查
+make clippy   # Clippy 检查
+make test     # 运行测试
+```
+
+如果环境没有 `make`，可以手动运行：
+
+```bash
+cd admin-ui && pnpm install --frozen-lockfile && pnpm build
+cd ..
+cargo fmt --check
+cargo clippy --all-targets -- -D warnings -A clippy::field_reassign_with_default -A clippy::large_enum_variant
+cargo test --locked
+```
+
+### CI 验证流程
+
 本仓库的 CI 会按以下顺序验证：
 
 ```bash
@@ -461,7 +491,7 @@ cargo clippy --all-targets -- -D warnings -A clippy::field_reassign_with_default
 cargo test --locked
 ```
 
-注意：
+### 注意事项
 
 - 后端通过 `rust-embed` 嵌入 `admin-ui/dist`，因此运行 `cargo test` 或 `cargo build` 前需要先构建 Admin UI。
 - `field_reassign_with_default` 主要来自既有测试代码的构造方式，暂时作为 Clippy 允许项保留。
@@ -484,11 +514,27 @@ cargo test --locked
 - **Admin UI**
   - `GET /admin` - 访问管理页面（需要在编译前构建 `admin-ui/dist`）
 
+### Admin 安全提示
+
+⚠️ **重要安全提示**：
+
+1. **Admin UI 适合本地或可信网络使用**，不建议将 `/admin` 路径暴露到公网
+2. Admin UI 使用 `sessionStorage` 存储 API Key，关闭浏览器标签页后需要重新输入
+3. 如需公网部署，建议：
+   - 使用反向代理（如 Nginx）限制 `/admin` 和 `/api/admin/*` 路径的访问来源
+   - 配置强密码作为 `adminApiKey`
+   - 启用 HTTPS
+
 ## 注意事项
 
 1. **凭证安全**: 请妥善保管 `credentials.json` 文件，不要提交到版本控制
 2. **Token 刷新**: 服务会自动刷新过期的 Token，无需手动干预
 3. **WebSearch 工具**: 当 `tools` 列表仅包含一个 `web_search` 工具时，会走内置 WebSearch 转换逻辑
+4. **公网部署**: 如需公网暴露服务，请务必：
+   - 使用强 API Key（`apiKey` 和 `adminApiKey`）
+   - 启用 HTTPS（建议使用反向代理如 Nginx + Let's Encrypt）
+   - 限制 Admin 路径的访问来源
+   - 定期检查日志，监控异常访问
 
 ## 项目结构
 
