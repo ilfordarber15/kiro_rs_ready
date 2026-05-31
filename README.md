@@ -45,6 +45,7 @@
 - **Admin 管理**: 可选的 Web 管理界面和 API，支持凭据管理、余额查询等
 - **多级 Region 配置**: 支持全局和凭据级别的 Auth Region / API Region 配置
 - **凭据级代理**: 支持为每个凭据单独配置 HTTP/SOCKS5 代理，优先级：凭据代理 > 全局代理 > 无代理
+- **维护基线**: 已补充 CI，覆盖 Admin UI 构建、Rust 格式检查、Clippy 和单元测试
 
 ---
 
@@ -67,6 +68,7 @@
   - [Thinking 模式](#thinking-模式)
   - [工具调用](#工具调用)
 - [模型映射](#模型映射)
+- [开发与维护](#开发与维护)
 - [Admin（可选）](#admin可选)
 - [注意事项](#注意事项)
 - [项目结构](#项目结构)
@@ -435,6 +437,8 @@ RUST_LOG=debug ./target/release/kiro-rs
 
 ## 模型映射
 
+模型列表、Anthropic 兼容模型名映射、上下文窗口大小由 `src/anthropic/models.rs` 统一维护，避免 `/v1/models` 与请求转换逻辑不一致。
+
 | Anthropic 模型 | Kiro 模型 |
 |----------------|-----------|
 | `*sonnet*`（含 4.6/4-6） | `claude-sonnet-4.6` |
@@ -444,6 +448,25 @@ RUST_LOG=debug ./target/release/kiro-rs
 | `*opus*`（含 4.5/4-5） | `claude-opus-4.5` |
 | `*opus*`（其他） | `claude-opus-4.6` |
 | `*haiku*` | `claude-haiku-4.5` |
+
+## 开发与维护
+
+本仓库的 CI 会按以下顺序验证：
+
+```bash
+cd admin-ui && pnpm install --frozen-lockfile && pnpm build
+cd ..
+cargo fmt --check
+cargo clippy --all-targets -- -D warnings -A clippy::field_reassign_with_default -A clippy::large_enum_variant
+cargo test --locked
+```
+
+注意：
+
+- 后端通过 `rust-embed` 嵌入 `admin-ui/dist`，因此运行 `cargo test` 或 `cargo build` 前需要先构建 Admin UI。
+- `field_reassign_with_default` 主要来自既有测试代码的构造方式，暂时作为 Clippy 允许项保留。
+- `large_enum_variant` 来自 `CredentialsConfig` 的兼容数据结构，直接改成 boxed enum 会影响序列化/调用形态，暂时作为兼容性债务保留。
+- 新增模型时应同时更新 `src/anthropic/models.rs` 中的模型条目、映射规则、上下文窗口，并补充/确认模型注册表测试。
 
 ## Admin（可选）
 
@@ -485,6 +508,7 @@ kiro-rs/
 │   │   ├── handlers.rs         # 请求处理器
 │   │   ├── middleware.rs       # 认证中间件
 │   │   ├── types.rs            # 类型定义
+│   │   ├── models.rs           # 模型注册表和映射规则
 │   │   ├── converter.rs        # 协议转换器
 │   │   ├── stream.rs           # 流式响应处理
 │   │   └── websearch.rs        # WebSearch 工具处理
