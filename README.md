@@ -73,6 +73,7 @@
 - [注意事项](#注意事项)
 - [项目结构](#项目结构)
 - [技术栈](#技术栈)
+- [更新日志](#更新日志)
 - [License](#license)
 - [致谢](#致谢)
 
@@ -602,6 +603,27 @@ kiro-rs/
 - **序列化**: [Serde](https://serde.rs/)
 - **日志**: [tracing](https://github.com/tokio-rs/tracing)
 - **命令行**: [Clap](https://github.com/clap-rs/clap)
+
+## 更新日志
+
+### 2026-05-31 - 安全收口和开发体验改进
+
+#### 安全改进
+- **API Key 日志脱敏**: 启动日志中的 API Key 只显示前4位和后4位（如 `sk-k...3456`），降低日志泄露风险
+- **Admin UI 存储安全**: 改用 `sessionStorage` 替代 `localStorage`，关闭浏览器标签页后自动清除凭据，降低长期残留风险
+- **安全警告文档**: README 新增 Admin 安全提示章节，明确说明 Admin UI 适合本地或可信网络使用，提供公网部署安全建议
+
+#### 开发体验
+- **Makefile 支持**: 新增 Makefile 简化开发流程
+  - `make ci` - 运行完整 CI 验证（UI 构建 + 格式检查 + Clippy + 测试）
+  - `make build` - 构建 Release 版本
+  - `make ui/fmt/clippy/test` - 单独运行各项检查
+- **开发文档优化**: README 新增"快速开始"小节，推荐使用 Makefile，避免忘记构建 Admin UI
+- **GitHub 语言统计**: 新增 `.gitattributes` 将 Admin UI 标记为 vendored，突出 Rust 作为主要语言
+
+#### 注意事项
+- 更新后首次使用 Admin UI 需要重新输入 API Key（因改用 sessionStorage）
+- 每次关闭浏览器标签页后需要重新登录 Admin UI（这是安全改进的预期行为）
 
 ## License
 
